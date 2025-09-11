@@ -16,3 +16,32 @@ ggplot(data = mpg) +
 
 ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy, color = class, size = cyl), shape = 1)
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = year))
+  
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+#putting the color inside the aes doesn't change the color, put it outside
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class, size = cyl), shape = 1) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+#geo_smooth creates a smooth trendline 
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class, size = cyl), shape = 1) +
+  geom_smooth()
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class, size = cyl), shape = 1) +
+  geom_smooth() +
+  facet_wrap(~ year, nrow = 2) 
+#nrow = 2 puts them on top of each other
+# the '~' is needed for the facet_wrap, just the way it works
+
+#creating sub-plots for each class
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~ class)
+#splitting by "class", use the facet_wrap to show all graphs by class
