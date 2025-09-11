@@ -45,3 +45,11 @@ ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy)) +
   facet_wrap(~ class)
 #splitting by "class", use the facet_wrap to show all graphs by class
+
+#there is a default theme, but can use other themes
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class, size = cyl), shape = 1) +
+  geom_smooth() +
+  facet_wrap(~ year, nrow = 2) +
+  theme_classic()
+#play around with different themes using the list from "theme_"
