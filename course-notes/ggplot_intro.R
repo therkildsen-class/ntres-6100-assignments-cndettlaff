@@ -53,3 +53,21 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
   facet_wrap(~ year, nrow = 2) +
   theme_classic()
 #play around with different themes using the list from "theme_"
+
+
+
+
+
+#Data Wrangling with ggplot
+
+ggplot(data=mpg, mapping = aes(x=displ, y=hwy)) +
+  geom_point(mapping=aes (color=class, size=cyl), shape=1) +
+  geom_smooth() +
+  facet_wrap(~year, nrow=2) +
+  theme_minimal()
+
+#save the plot with code IOT have a log of what happened and changes happen to the file itself when updated
+ggsave(filename = "hwy_vs_displ.png", width = 8, height = 4)
+
+
+
