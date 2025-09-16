@@ -67,6 +67,7 @@ ggplot(data=mpg, mapping = aes(x=displ, y=hwy)) +
   theme_minimal()
 
 #save the plot with code IOT have a log of what happened and changes happen to the file itself when updated
+#only works in r script
 ggsave(filename = "hwy_vs_displ.png", width = 8, height = 4)
 
 
