@@ -25,5 +25,5 @@ Please use the following table to grade the student's assignment:
 
 Assignment 2:
 Assignment 3:
-  - Webiste:
-  - Repo:
+  - Webiste:https://cndettlaff.github.io/assignment-3-cnd34/
+  - Repo:https://github.com/cndettlaff/assignment-3-cnd34.git
