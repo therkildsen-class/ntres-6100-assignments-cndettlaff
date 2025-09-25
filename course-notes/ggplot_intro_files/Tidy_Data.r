@@ -20,3 +20,8 @@ coronavirus |>
   ggplot() +
   geom_line(mapping = aes(x = date, y= total, color = country)) +
   facet_wrap(~ country)
+
+
+# Tidy Data ---------------------------------------------------------------
+
+New update
