@@ -64,3 +64,80 @@ housing |>
   theme_minimal(base_size = 13) +
   theme(legend.position = "right")
 ```
+
+## Exercise 2. Life expectancy and GDP per capita 1952-2007
+
+```{r}
+gapminder |> 
+  head() |> 
+  kable()
+```
+
+#### 2.1 Use a scatterplot to explore the relationship between per capita GDP (`gdpPercap`) and life expectancy (`lifeExp`) in the year 2007.
+
+```{r}
+gapminder |> 
+  filter(year == "2007") |> 
+  select(gdpPercap, lifeExp) |> 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+```
+
+#### 2.2 Add a smoothing line to the previous plot.
+
+```{r}
+gapminder |> 
+  filter(year == "2007") |> 
+  select(gdpPercap, lifeExp) |> 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()+
+  geom_smooth()
+```
+
+#### 2.3 Exclude Oceania from the previous plot, show each continent in a different color, and fit a separate smoothing line to each continent to identify differences in this relationship between continents. Turn off the confidence intervals.
+
+```{r}
+gapminder |> 
+  filter(year == "2007") |> 
+  select(gdpPercap, lifeExp, continent) |> 
+  filter(continent != "Oceania") |> 
+  ggplot(aes(x = gdpPercap, y = lifeExp, color = continent)) +
+  geom_point()+
+  geom_smooth(se = FALSE)
+```
+
+#### 2.4 Use faceting to solve the same problem. Include the confidence intervals in this plot.
+
+```{r}
+gapminder |> 
+  filter(year == "2007") |> 
+  select(gdpPercap, lifeExp, continent) |> 
+  filter(continent != "Oceania") |> 
+  ggplot(aes(x = gdpPercap, y = lifeExp, color = continent)) +
+  geom_point()+
+  geom_smooth() +
+  facet_wrap(~ continent)
+```
+
+#### 2.5 Explore the trend in life expectancy through time in each continent. Color by continent.
+
+```{r}
+gapminder |> 
+  ggplot(aes(x = year, y = lifeExp, group = country, color = continent)) +
+  geom_line() +
+  facet_wrap(~ continent)
+
+```
+
+#### 2.6 From the previous plot, we see some abnormal trends in Asia and Africa, where the the life expectancy in some countries sharply dropped at certain time periods. Here, we look into what happened in Asia in more detail. First, create a new dataset by filtering only the Asian countries. Show the first 6 lines of this filtered dataset.
+
+```{r}
+gapminder |> 
+  filter(continent == "Asia") |> 
+  head() |> 
+  kable()
+```
+
+#### Using the filtered dataset, identify the countries that had abnormal trends in life expectancy **by plotting**, and discuss historical events possibly explaining these trends. 
+
+A\) There are three countries that show abnormal trends: Cambodia, China, and Iraq. The reason(s) why these countries show these abnormal trends in life expectancy is because of wars conducted in/by those countries. These would result in more deaths each year than just the natural causes you would expect because of war casualties.
