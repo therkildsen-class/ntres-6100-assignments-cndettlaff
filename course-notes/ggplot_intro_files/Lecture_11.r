@@ -26,3 +26,8 @@ msa <- read_tsv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science
 colnames(msa)
 # package that cleans us messy lables -> janitor, clean_names()
 msa_clean <- clean_names(msa)
+
+?parse_number
+parse_number("$100")
+parse_double("1,23", locale = locale(decimal_mark = ","))
+parse_number("123.456.789", locale = locale(grouping_mark = "."))
