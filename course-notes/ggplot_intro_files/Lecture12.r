@@ -68,4 +68,23 @@ flights2 |>
   left_join(airports, join_by(origin == faa)) |> 
   left_join(airports, join_by(dest == faa), suffix = c("_origin", "dest"))
 
-  
+airports |> 
+  semi_join(flights2, join_by(faa == origin))
+
+# if I want to see if there's any missing data in a data set
+
+flights2 |> 
+  anti_join(airports, join_by(dest == faa)) |> 
+  distinct(dest)
+
+planes_gt100 <- flights2 |> 
+  group_by(tailnum) |> 
+  summarise(count = n()) |> 
+  filter(count > 100)
+
+planes_gt100 <- flights2 |> 
+  count(tailnum) |> 
+  filter(n > 100)
+
+flights |> 
+  semi_join(planes_gt100)
