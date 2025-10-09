@@ -51,7 +51,6 @@ tibble(
 data2 <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science/master/datasets/dataset2.txt",
                   header = FALSE)
 colnames(data2) <- c("Name", "Weight", "Price")
-
 data2
 ```
 
@@ -59,3 +58,22 @@ data2
     1  apple      1   2.9
     2 orange      2   4.9
     3 durian     10  19.9
+
+1.3
+
+``` r
+data3 <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science/master/datasets/dataset3.txt",
+                   header = TRUE,   # There's a header line after the metadata
+  sep = ";",               # Columns separated by semicolons
+  quote = "/",             # Text enclosed in slashes
+  na.strings = c("?", "Not Available"),  # Handle missing values
+  skip = 2,                # Skip first two metadata lines
+  stringsAsFactors = FALSE
+)
+data3
+```
+
+        Name Weight Price
+    1  apple      1   2.9
+    2 orange      2    NA
+    3 durian     NA  19.9
