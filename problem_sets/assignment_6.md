@@ -77,3 +77,89 @@ data3
     1  apple      1   2.9
     2 orange      2    NA
     3 durian     NA  19.9
+
+## Exercise 2. Weather station
+
+#### 2.1 Variable descriptions
+
+``` r
+notes <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science/master/datasets/2015y_Weather_Station_notes.txt",
+                  header = TRUE,
+sep = "-",               # Columns separated by dash
+)
+kable(notes)
+```
+
+| Item | Unit | Description |
+|:---|:---|:---|
+| AMB_TEMP | Celsius | Ambient air temperature |
+| CO | ppm | Carbon monoxide |
+| NO | ppb | Nitric oxide |
+| NO2 | ppb | Nitrogen dioxide |
+| NOx | ppb | Nitrogen oxides |
+| O3 | ppb | Ozone |
+| PM10 | μg/m3 | Particulate matter with a diameter between 2.5 and 10 μm |
+| PM2.5 | μg/m3 | Particulate matter with a diameter of 2.5 μm or less |
+| RAINFALL | mm | Rainfall |
+| RH | % | Relative humidity |
+| SO2 | ppb | Sulfur dioxide |
+| WD_HR | degress | Wind direction (The average of hour) |
+| WIND_DIREC | degress | Wind direction (The average of last ten minutes per hour) |
+| WIND_SPEED | m/sec | Wind speed (The average of last ten minutes per hour) |
+| WS_HR | m/sec | Wind speed (The average of hour) |
+
+#### 2.2 Data tidying
+
+``` r
+notes2015 <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science/master/datasets/2015y_Weather_Station.csv")
+
+library(tidyverse)
+
+notes2015_clean <-
+  notes2015 %>%
+  pivot_longer(
+    cols = matches("^(X)?\\d{2}$"),         # handles 00..23 or X00..X23
+    names_to = "hour", values_to = "val"
+  ) %>%
+  mutate(
+    date = as.Date(date, format = "%Y/%m/%d"),
+    hour = str_remove(hour, "^X"),
+    # rainfall "NR" -> 0; other junk -> NA
+    val  = if_else(grepl("rain", item, ignore.case = TRUE) & val == "NR", "0", val),
+    val  = na_if(val, ""),
+    val  = if_else(val %in% c("NR","NA","N/A","-","x","X","?"), NA_character_, val),
+    value = suppressWarnings(as.numeric(val)),
+    hour  = sprintf("%02d", as.numeric(hour)),
+    hour  = readr::parse_time(paste0(hour, ":00"))   # <time> column
+  ) %>%
+  select(date, station, item, hour, value) %>%
+  pivot_wider(names_from = item, values_from = value, values_fill = NA_real_) %>%
+  select(date, station, hour, AMB_TEMP, CO, NO, NO2, NOx, O3, PM10) %>%
+  arrange(date, station, hour)
+
+head(notes2015_clean)
+```
+
+    # A tibble: 6 × 10
+      date       station hour   AMB_TEMP    CO    NO   NO2   NOx    O3  PM10
+      <date>     <chr>   <time>    <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    1 2015-01-01 Cailiao 00:00        16  0.74   1      15    16    35   171
+    2 2015-01-01 Cailiao 01:00        16  0.7    0.8    13    14    36   174
+    3 2015-01-01 Cailiao 02:00        15  0.66   1.1    13    14    35   160
+    4 2015-01-01 Cailiao 03:00        15  0.61   1.7    12    13    34   142
+    5 2015-01-01 Cailiao 04:00        15  0.51   2      11    13    34   123
+    6 2015-01-01 Cailiao 05:00        14  0.51   1.7    13    15    32   110
+
+#### 2.3 Using this cleaned dataset, plot the daily variation in ambient temperature on September 25, 2015, as shown below.
+
+``` r
+notes2015_clean |> 
+  filter(date == as.Date("2015-09-25"),
+         station == "Cailiao") |> 
+  ggplot(aes(x = hour, y = AMB_TEMP)) +
+  geom_line()
+```
+
+![](assignment_6_files/figure-commonmark/unnamed-chunk-7-1.png)
+
+#### 2.4 Plot the daily average ambient temperature throughout the year with a **continuous line**.

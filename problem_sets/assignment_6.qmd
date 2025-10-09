@@ -52,3 +52,89 @@ data3 <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-scien
 )
 data3
 ```
+
+## Exercise 2. Weather station
+
+#### 2.1 Variable descriptions
+
+```{r}
+notes <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science/master/datasets/2015y_Weather_Station_notes.txt",
+                  header = TRUE,
+sep = "-",               # Columns separated by dash
+)
+kable(notes)
+```
+
+#### 2.2 Data tidying
+
+```{r}
+notes2015 <- read.csv("https://raw.githubusercontent.com/nt246/NTRES-6100-data-science/master/datasets/2015y_Weather_Station.csv")
+
+library(tidyverse)
+
+notes2015_clean <-
+  notes2015 %>%
+  pivot_longer(
+    cols = matches("^(X)?\\d{2}$"),         # handles 00..23 or X00..X23
+    names_to = "hour", values_to = "val"
+  ) %>%
+  mutate(
+    date = as.Date(date, format = "%Y/%m/%d"),
+    hour = str_remove(hour, "^X"),
+    # rainfall "NR" -> 0; other junk -> NA
+    val  = if_else(grepl("rain", item, ignore.case = TRUE) & val == "NR", "0", val),
+    val  = na_if(val, ""),
+    val  = if_else(val %in% c("NR","NA","N/A","-","x","X","?"), NA_character_, val),
+    value = suppressWarnings(as.numeric(val)),
+    hour  = sprintf("%02d", as.numeric(hour)),
+    hour  = readr::parse_time(paste0(hour, ":00"))   # <time> column
+  ) %>%
+  select(date, station, item, hour, value) %>%
+  pivot_wider(names_from = item, values_from = value, values_fill = NA_real_) %>%
+  select(date, station, hour, AMB_TEMP, CO, NO, NO2, NOx, O3, PM10) %>%
+  arrange(date, station, hour)
+
+head(notes2015_clean)
+
+```
+
+#### 2.3 Using this cleaned dataset, plot the daily variation in ambient temperature on September 25, 2015, as shown below.
+
+```{r}
+notes2015_clean |> 
+  filter(date == as.Date("2015-09-25"),
+         station == "Cailiao") |> 
+  ggplot(aes(x = hour, y = AMB_TEMP)) +
+  geom_line()
+```
+
+#### 2.4 Plot the daily average ambient temperature throughout the year with a **continuous line**.
+
+```{r}
+notes2015_clean |> 
+  group_by(date, station) |> 
+  summarise(daily_average_ambient_temp = mean(AMB_TEMP, na.rm = TRUE), .groups = "drop") |> 
+  ggplot(aes(x = date, y = daily_average_ambient_temp)) +
+  geom_line()
+  
+
+```
+
+#### 2.5 Plot the total rainfall per month in a bar chart.
+
+```{r}
+colnames(notes2015_clean)
+notes2015_clean |> 
+  filter(item == "RAINFALL") |>
+  group_by(month = format(date, "%m")) |> 
+  summarise(MonthlyRainfall = sum(value, na.rm = TRUE), .groups = "drop") |> 
+  ggplot(aes(x = month, y = MonthlyRainfall)) +
+  geom_col(fill = "black")
+
+```
+
+#### 2.6 Plot the per hour variation in PM2.5 in the first week of September with a **continuous line**.
+
+```{r}
+
+```
