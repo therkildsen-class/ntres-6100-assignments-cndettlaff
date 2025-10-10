@@ -123,9 +123,18 @@ notes2015_clean |>
 #### 2.5 Plot the total rainfall per month in a bar chart.
 
 ```{r}
-colnames(notes2015_clean)
-notes2015_clean |> 
-  filter(item == "RAINFALL") |>
+notes2015 |> 
+  pivot_longer(matches("^(X)?\\d{2}$"), names_to = "hour", values_to = "val") |> 
+  mutate(
+    date = as.Date(date, "%Y/%m/%d"),
+    val  = case_when(
+      grepl("rain", item, ignore.case = TRUE) & val == "NR" ~ "0",
+      val %in% c("", "NR", "NA", "N/A", "-", "x", "X", "?") ~ NA_character_,
+      TRUE ~ val
+    ),
+    value = suppressWarnings(as.numeric(val))
+  ) |> 
+  filter(item == "RAINFALL") |> 
   group_by(month = format(date, "%m")) |> 
   summarise(MonthlyRainfall = sum(value, na.rm = TRUE), .groups = "drop") |> 
   ggplot(aes(x = month, y = MonthlyRainfall)) +
@@ -136,5 +145,25 @@ notes2015_clean |>
 #### 2.6 Plot the per hour variation in PM2.5 in the first week of September with a **continuous line**.
 
 ```{r}
-
+notes2015 %>%
+  pivot_longer(matches("^(X)?\\d{2}$"), names_to = "hour", values_to = "val") %>%
+  mutate(
+    date = as.Date(date, "%Y/%m/%d"),
+    hour = sub("^X", "", hour),
+    # clean tokens (keep rainfall rule for consistency; harmless here)
+    val  = case_when(
+      grepl("rain", item, ignore.case = TRUE) & val == "NR" ~ "0",
+      val %in% c("", "NR","NA","N/A","-","x","X","?")       ~ NA_character_,
+      TRUE ~ val
+    ),
+    value    = suppressWarnings(as.numeric(val)),
+    datetime = as.POSIXct(paste(date, sprintf("%02d", as.integer(hour))),
+                          format = "%Y-%m-%d %H")
+  ) %>%
+  filter(item == "PM2.5",
+         between(date, as.Date("2015-09-01"), as.Date("2015-09-07"))) %>%
+  ggplot(aes(datetime, value)) +
+  geom_line()
 ```
+
+![](http://localhost:6078/assignment_6_files/figure-commonmark/unnamed-chunk-9-1.png)
