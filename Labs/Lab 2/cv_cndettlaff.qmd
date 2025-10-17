@@ -1,0 +1,94 @@
+---
+author: Cody Dettlaff
+title: Conservationist
+format:
+  classic-cv-pdf: default
+cvfooter:
+  left: "I am"
+  right: "here"
+cvcolor: 58748F #without `#`
+cvfont: fetamont #texlive fonts like raleway,fetamont,gillius,comfortaa
+cvmeta:
+  - title: Status
+    left: MPS Candidate, Cornell University
+    right: Ithaca, NY
+  - title: College
+    left: Agriculture and Life Sciences
+    right: Department of Natural Resources and the Environment
+  - title: Skills
+    left: GIS, Field Ecology, SCUBA, R
+    right: cnd34@cornell.edu
+execute:
+  echo: false
+---
+
+```{r}
+#| label: cvevents
+cvevents <- function(tbl, when, what, where, details) {
+
+    command_start <- "\\cvevent"
+
+    res <- paste0(
+        command_start, "{", tbl[[when]], "}", 
+        "{", tbl[[what]], "}",
+        "{", tbl[[where]], "}")
+    
+    tbl[[details]] <- sapply(tbl[[details]], function(x) paste0("{", x, "}", collapse = ","))
+    res <- paste0(res, "{",tbl[[details]],"}")
+
+    cat(res, sep = "\n")
+}
+```
+
+# Professional Summary
+
+Environmental consultant in training and U.S. Marine Corps veteran with 9 years of proven leadership in global operations. Specialized in risk analysis, GIS, and ecological assessment, with applied research on sturgeon habitats, reef ecosystems, and marine bioacoustics. Experienced in project management, stakeholder engagement, and data-driven decision support. Adept at bridging field ecology, spatial analysis, and risk management to deliver actionable solutions for conservation, infrastructure, and resource management challenges.
+
+
+# Research Experience
+
+```{r}
+#| label: research experience
+#| output: asis
+tibble::tribble(
+    ~role, ~institution, ~dates, ~details, ~tasks,
+    "Team Lead", "GESIS - Leibniz Institute for the Social Sciences", "Mar. 2022 - Present",
+    "Transparent Social Analytics, Department of Computational Social Science", c("Coordination of a project to build an Open Science platform with reusable code and tutorials", "Research on Open Science Practices", "Implementation of tools to enhance reproducibility and facilitate research with digital data in R"),
+    "Presidential Fellow", "University of Manchester", "Sep. 2018 - Feb. 2022",
+    "Sociology Department", c("Research on Disinformation on Social Media", "Analyses of large scale and unstructured data sets with R, Python and Bash"),
+    "Post Doctoral Researcher", "ETH Zurich", "Nov. 2017 - Aug. 2018", "Chair of Social Networks", c("Developing new methods to analyze social networks", "Implementing methods in libraries", "Gathering and analyzing large datsets from Social Media APIs"),
+    "Post Doctoral Researcher", "University of Konstanz", "Oct. 2015 - Oct. 2017", "Department of Computer & Information Science", c("Developing new methods to analyze social networks", "Implementing methods in libraries", "Webscraping and harmonizing a large corpus of football data"),
+    "Ph.D. Candidate", "University of Konstanz", "Nov. 2012 - Sep. 2015", "Department of Computer & Information Science", c("Developing new methods to analyze social networks", "Implementing methods in libraries")
+) |>
+    cvevents(when = "dates", what = "role", where = "institution", details = "tasks")
+```
+
+# Professional Experience
+
+```{r}
+#| label: professional experience
+#| output: asis
+tibble::tribble(
+    ~role, ~institution, ~dates, ~details, ~tasks,
+   
+    "CFL-2 Trainer", "Crossfit Vertical", "Sep. 2023 - Present",
+    "N/A", c("Manage classes of 150+ athletes, fostering teamwork, resilience, and goal achievement.", "Holds a certification of Adaptive and Inclusive Trainer"),
+    "Outreach Peer Counselor", "Cornell University", "Sep. 2022 - Present", "Undergraduate Admissions", c("Lead a team of 4 supporting veteran admissions, recruitment, and data security."),
+    "Dive Master", "Cornell University", "Sep. 2023 - May. 2024", "Outdoor Recreation", c("Fill this out later"),
+    "Infantry Unit Leader", "United States Marine Corps", "Oct. 2012 - Jul. 2021", "Department of Computer & Information Science", c("Directed high-risk operations with teams of up to 63 personnel across deployments in the Balkans, Pacific, and Middle East.", "Authored multiple Standard Operating Procedures later adopted at the battalion and company level.", "Conducted risk assessments, resource allocation, and logistics management for projects valued at 3.5 million dollars.", "Trained and advised multinational partner forces, strengthening coalition operations and cross-cultural coordination.", "Recognized with Navy and Marine Corps Achievement Medals (2) for leadership and mission success.")
+) |>
+    cvevents(when = "dates", what = "role", where = "institution", details = "tasks")
+```
+
+# Education
+
+```{r }
+#| label: education
+#| output: asis
+tibble::tribble(
+    ~degree, ~uni, ~loc, ~dates, ~details,
+    "MPS in Natural Resources and the Environment", "Cornell University", "Ithaca, New York", "Aug. 2025 - Aug. 2026", c("Capstone: Predictive modling of Mesophotic Reef Systems", "Fill this out later"),
+    "B.S. in Biological Sciences", "Cornell University", "Ithaca, New York", "Jun. 2022 - May. 2025", c("Concentration: Marine Biology", "Minor: Environment and Sustainability")
+) |>
+    cvevents(when = "dates", what = "degree", where = "uni", details = "details")
+```
