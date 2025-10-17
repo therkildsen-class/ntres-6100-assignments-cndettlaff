@@ -13,6 +13,8 @@ library(tidyverse)
 
 ## **Exercise 1: Optimize for loops**
 
+Design an experiment to systematically compare the computational efficiency between the two approaches. Which approach is more efficient, and why might that be?
+
 ```{r}
 #| echo: false
 n_iterations <- (1:5)*5000
@@ -39,4 +41,156 @@ tibble(n_iterations, approach_1, approach_2) |>
   pivot_longer(2:3, names_to = "approach", values_to = "runtime") |>
   ggplot(aes(x=n_iterations, y=runtime, color=approach)) +
   geom_line()
+```
+
+**Approach 2 (pre-allocate then fill)** is more efficient.\
+**Why:** Approach 1 repeatedly grows the vector with `c(...)`, which forces frequent reallocation and copying of the entire vector (amortized quadratic work). Approach 2 allocates memory once and writes in place (linear work), avoiding repeated copies and reducing GC pressure and cache misses.
+
+## **Exercise 2: Infinite monkey theorem and Markov Chain Monte Carlo simulation**
+
+**Write a loop that generates a random paragraph using MCMC simulation.**
+
+```{r}
+#| echo: false
+mcmc_paragraph <- function(n = 500, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+
+  lower_pool <- letters
+  punct_pool <- c(" ", ",", "!")
+  pool       <- c(lower_pool, punct_pool)
+
+  out <- character(0)
+
+  # Rule: first character must be UPPERCASE
+  out <- c(out, sample(LETTERS, 1))
+
+  # "Pending" state: after a comma or exclamation, we must inject patterns
+  pending <- NULL  # one of NULL / "comma_seq" / "exclam_seq"
+
+  while (length(out) < n) {
+
+    last_char <- out[length(out)]
+
+    # If we have a forced follow-up (after ',' or '!'), emit it now:
+    if (!is.null(pending)) {
+      if (pending == "comma_seq") {
+        # Force ", " + lowercase
+        out <- c(out, " ")
+        if (length(out) >= n) break
+        out <- c(out, sample(lower_pool, 1))
+        pending <- NULL
+        next
+      }
+      if (pending == "exclam_seq") {
+        # Force "! " + UPPERCASE
+        out <- c(out, " ")
+        if (length(out) >= n) break
+        out <- c(out, sample(LETTERS, 1))
+        pending <- NULL
+        next
+      }
+    }
+
+    # Build the candidate set subject to constraints
+    if (last_char == " ") {
+      # Rule: after a space, no space/comma/exclamation (avoids "  ", " ,", " !")
+      candidates <- lower_pool
+    } else {
+      # Otherwise everything is fair game (maximize randomness)
+      candidates <- pool
+    }
+
+    # Sample the next character
+    next_char <- sample(candidates, 1)
+    out <- c(out, next_char)
+
+    # If we just placed a comma or exclamation, schedule the forced sequence
+    if (next_char == ",") {
+      # Also ensure we didn't place comma after a space (we prevented that above)
+      pending <- "comma_seq"
+    } else if (next_char == "!") {
+      pending <- "exclam_seq"
+    } else if (next_char == " ") {
+      # Already prevented double spaces via candidate set when last_char == " "
+      # Nothing special here.
+    }
+  }
+
+  # Collapse to a single string
+  paste0(out, collapse = "")
+}
+  # Example:
+cat(mcmc_paragraph(n = 400, seed = 42))
+```
+
+#### **2.2 Building on the last question, come up with one additional rule and apply it to your random paragraph generator.**
+
+```{r}
+#| echo: false
+mcmc_paragraph_v2 <- function(n = 500, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+
+  lower_pool <- letters
+  punct_pool <- c(" ", ",", "!")
+  pool       <- c(lower_pool, punct_pool)
+
+  out <- character(0)
+  out <- c(out, sample(LETTERS, 1))  # First letter uppercase
+
+  pending <- NULL
+  chars_since_punct <- 0  # Track distance to trigger sentence-ending '!'
+
+  while (length(out) < n) {
+    last_char <- out[length(out)]
+
+    # Handle forced sequences
+    if (!is.null(pending)) {
+      if (pending == "comma_seq") {
+        out <- c(out, " ", sample(lower_pool, 1))
+        pending <- NULL
+        chars_since_punct <- chars_since_punct + 2
+        next
+      }
+      if (pending == "exclam_seq") {
+        out <- c(out, " ", sample(LETTERS, 1))
+        pending <- NULL
+        chars_since_punct <- 0
+        next
+      }
+    }
+
+    # Rule: after space, no punctuation
+    if (last_char == " ") {
+      candidates <- lower_pool
+    } else {
+      candidates <- pool
+    }
+
+    # --- NEW RULE ---
+    # If we've gone 10–20 characters since last punctuation, end sentence
+    if (chars_since_punct >= sample(10:20, 1)) {
+      next_char <- "!"
+    } else {
+      next_char <- sample(candidates, 1)
+    }
+
+    out <- c(out, next_char)
+
+    # Update counters and pending states
+    if (next_char == ",") {
+      pending <- "comma_seq"
+    } else if (next_char == "!") {
+      pending <- "exclam_seq"
+    }
+
+    chars_since_punct <- ifelse(next_char %in% c("!", ","), 0, chars_since_punct + 1)
+  }
+
+  paste0(out, collapse = "")
+}
+
+# Example
+set.seed(42)
+cat(mcmc_paragraph_v2(n = 400))
+
 ```
