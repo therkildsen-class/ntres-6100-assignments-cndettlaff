@@ -1,0 +1,233 @@
+---
+title: "Assignment 7"
+format: gfm
+editor: visual
+---
+
+```{r}
+#| echo: false
+library(tidyverse)
+library(knitr)
+library(dslabs)
+
+```
+
+```{r}
+murders
+results_us_election_2016
+```
+
+### Question 1. What is the relationship between the population size and the number of electoral votes each state has?
+
+**1a.** Use a `join` function to combine the `murders` dataset, which contains information on population size, and the`results_us_election_2016` dataset, which contains information on the number of electoral votes. Name this new dataset `q_1a`, and show its first 6 rows.
+
+```{r}
+q_1a <- left_join(murders, results_us_election_2016, by = "state")
+kable(head(q_1a))
+
+```
+
+**1b.** Add a new variable in the `q_1a` dataset to indicate which candidate won in each state, and remove the columns `abb`, `region`, and`total`. Name this new dataset `q_1b`, and show its first 6 rows.
+
+```{r}
+q_1b <- q_1a %>%
+  mutate(
+    winner = case_when(
+      clinton > trump ~ "clinton",
+      trump > clinton ~ "trump",
+      TRUE ~ "tie"
+    )
+  ) %>%
+  select(state, population, electoral_votes, clinton, trump, johnson, stein, mcmullin, others, winner)
+
+kable(head(q_1b))
+```
+
+**1c.** Using the `q_1b` dataset, plot the relationship between population size and number of electoral votes. Use color to indicate who won the state. Fit a straight line to the data, set its color to black, size to 0.1, and turn off its confidence interval.
+
+```{r}
+#| message: false
+#| warning: false
+q_1b |> 
+  ggplot(aes(x = population, y = electoral_votes, color = winner)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, color = "black", size = 0.1) +
+  labs(
+    title = "Relationship Between Population Size and Electoral Votes (2016)",
+    x = "Population (State Level)",
+    y = "Number of Electoral Votes",
+    color = "Election Winner"
+  ) +
+  theme_minimal()
+```
+
+### Question 2. Would the election result be any different if the number of electoral votes is exactly proportional to a state’s population size?
+
+**2a.** First, convert the `q_1b` dataset to longer format such that the `population` and `electoral_votes` columns are turned into rows as shown below. Name this new dataset `q_2a`, and show its first 6 rows.
+
+```{r}
+q_2a <- q_1b |> 
+  tidyr::pivot_longer(
+    cols = c(population, electoral_votes),
+    names_to = "metric",
+    values_to = "value"
+  )
+kable(head(q_2a))
+```
+
+**2b.** Then, sum up the number of electoral votes and population size across all states for each candidate. Name this new dataset `q_2b`, and print it as shown below.
+
+```{r}
+q_2b <- q_2a |> 
+  dplyr::group_by(metric, winner) |> 
+  dplyr::summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |> 
+  dplyr::arrange(metric, winner)
+
+knitr::kable(q_2b, caption = "Totals by metric and winner")
+```
+
+**2c.** Use the `q_2b` dataset to contruct a bar plot to show the final electoral vote share under the scenarios of **1)** each state has the number of electoral votes that it currently has, and **2)** each state has the number of electoral votes that is exactly proportional to its population size. Here, assume that for each state, the winner will take all its electoral votes.
+
+```{r}
+q_2b |> 
+  dplyr::mutate(
+    metric = factor(
+      metric,
+      levels = c("electoral_votes", "population"),
+      labels = c("Current Electoral Votes", "Population-Proportional")
+    )
+  ) |> 
+  ggplot2::ggplot(ggplot2::aes(x = metric, y = value, fill = winner)) +
+  ggplot2::geom_col(position = "fill") +   # show as shares (100% stacked)
+  ggplot2::scale_y_continuous(labels = scales::percent_format()) +
+  ggplot2::labs(
+    title = "Final Vote Share by Allocation Rule (Winner-Take-All by State)",
+    x = "Allocation Rule",
+    y = "Share",
+    fill = "Winner"
+  ) +
+  ggplot2::theme_minimal()
+```
+
+### Question 3. What if the election was determined by popular votes?
+
+**3a.** First, from [this dataset on GitHub](https://raw.githubusercontent.com/kshaffer/election2016/master/2016ElectionResultsByState.csv), calculate the number of popular votes each candidate received as shown below. Name this new dataset `q_3a`, and print it.
+
+```{r}
+q_3a <- q_1b |> 
+  tidyr::pivot_longer(
+    cols = c(clinton, trump, johnson, stein, mcmullin, others),
+    names_to  = "candidate",    # <-- changed from "winner"
+    values_to = "vote_percent"
+  ) |> 
+  # Estimate total votes by multiplying population × percentage
+  dplyr::mutate(vote_estimate = population * vote_percent / 100) |> 
+  # Collapse minor candidates into "others"
+  dplyr::mutate(candidate = dplyr::case_when(
+    candidate %in% c("johnson", "stein", "mcmullin", "others") ~ "others",
+    TRUE ~ candidate
+  )) |> 
+  dplyr::group_by(candidate) |> 
+  dplyr::summarise(value = sum(vote_estimate, na.rm = TRUE), .groups = "drop") |> 
+  dplyr::mutate(metric = "popular_votes") |> 
+  dplyr::select(metric, winner = candidate, value) |> 
+  dplyr::arrange(match(winner, c("clinton", "trump", "others")))
+
+# Print results
+knitr::kable(q_3a, caption = "Popular votes by candidate (Clinton, Trump, Others)")
+```
+
+**3b.** Combine the `q_2b` dataset with the `q_3a` dataset. Call this new dataset `q_3b`, and print it as shown below.
+
+```{r}
+q_3b <- dplyr::bind_rows(q_2b, q_3a) |> 
+  dplyr::arrange(
+    match(metric, c("electoral_votes","population","popular_votes")),
+    match(winner, c("clinton","trump","others"))
+  )
+
+knitr::kable(q_3b, caption = "Combined totals: electoral votes, population, and popular votes")
+
+```
+
+**3c.** Lastly, use the `q_3b` dataset to contruct a bar plot to show the final vote share under the scenarios of **1)** each state has the number of electoral votes that it currently has, **2)** each state has the number of electoral votes that is exactly proportional to its population size, and **3)**the election result is determined by the popular vote.
+
+```{r}
+q_3b |> 
+dplyr::mutate(
+metric = factor(metric, levels = c("electoral_votes", "popular_votes", "population")),
+winner = factor(winner, levels = c("trump", "others", "clinton"))
+) |> 
+ggplot2::ggplot(ggplot2::aes(x = metric, y = value, fill = winner)) +
+ggplot2::geom_col(position = "fill") +
+ggplot2::scale_y_continuous(labels = scales::percent_format()) +
+ggplot2::scale_fill_manual(
+values = c(
+trump = "#377EB8", # blue
+others = "#4DAF4A", # green
+clinton = "#E41A1C" # red
+)
+) +
+ggplot2::labs(
+title = NULL,
+x = "metric",
+y = "value",
+fill = "winner"
+) +
+ggplot2::theme_minimal()
+```
+
+### Question 4. The election result in 2016 came as a huge surprise to many people, especially given that most polls predicted Clinton would win before the election. Where did the polls get wrong?
+
+**4a.** The polling data is stored in the data frame `polls_us_election_2016`. For the sake of simplicity, we will only look at the data from a single poll for each state. Subset the polling data to include only the results from the pollster `Ipsos`. Exclude national polls, and for each state, select the polling result with the `enddate` closest to the election day (i.e. those with the lastest end date). Keep only the columns `state`, `adjpoll_clinton`, and `adjpoll_trump`. Save this new dataset as `q_4a`, and show its first 6 rows.
+
+```{r}
+data("polls_us_election_2016")
+
+q_4a <- polls_us_election_2016 |> 
+dplyr::filter(pollster == "Ipsos", state != "U.S.") |> 
+dplyr::group_by(state) |> 
+dplyr::slice_max(enddate) |> 
+dplyr::select(state, adjpoll_clinton, adjpoll_trump) |> 
+dplyr::arrange(state)
+kable(head(q_4a))
+```
+
+**4b.** Combine the `q_4a` dataset with the `q_1b` dataset with a `join` function. The resulting dataset should only have 47 rows. Create the following new variables in this joined dataset.
+
+```{r}
+q_4b <- dplyr::inner_join(q_4a, q_1b, by = "state") |> 
+dplyr::mutate(
+polling_margin = adjpoll_clinton - adjpoll_trump,
+actual_margin = clinton - trump,
+polling_error = polling_margin - actual_margin,
+predicted_winner = dplyr::case_when(
+adjpoll_clinton > adjpoll_trump ~ "clinton",
+adjpoll_trump > adjpoll_clinton ~ "trump",
+TRUE ~ "tie"
+),
+result = ifelse(
+winner == predicted_winner,
+"correct prediction",
+stringr::str_c("unexpected ", winner, " win")
+)
+) |> 
+dplyr::select(state, polling_error, result, electoral_votes)
+kable(head(q_4b))
+```
+
+**4c.** Generate the following plot with the `q_4b` dataset. Use chunk options to adjust the dimensions of the plot to make it longer than the default dimension. Based on this plot, where did the polls get wrong in the 2016 election?
+
+```{r}
+q_4b |> 
+  dplyr::mutate(state = reorder(state, polling_error)) |> 
+  ggplot2::ggplot(
+    ggplot2::aes(x = polling_error, y = state,
+                 color = result, size = electoral_votes)
+  ) +
+  ggplot2::geom_point(alpha = 0.9) +
+  ggplot2::scale_size_continuous(breaks = c(10, 20, 30, 40, 50)) +
+  ggplot2::labs(x = "polling_error", y = "state",
+                color = "result", size = "electoral_votes") +
+  ggplot2::theme_gray()
+```
