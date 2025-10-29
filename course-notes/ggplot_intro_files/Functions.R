@@ -66,7 +66,7 @@ length(country_list)
 
 # cntry <- "Albania"
 
-print_plot <- function(cntry, stat) {
+print_plot <- function(cntry, stat = "gdp_per_cap", filetype = "pdf") {
   
   print(str_c("Plotting ", cntry))
   
@@ -79,13 +79,13 @@ print_plot <- function(cntry, stat) {
          subtitle = ifelse(any(gap_to_plot$estimated == "yes"), "Estimated data", "Reported data"),
          y = stat)
   
-  ggsave(filename = str_c("figures/europe/", cntry, "_", stat, ".png", sep = ""), plot = my_plot)
+  ggsave(filename = str_c("figures/europe/", cntry, "_", stat, ".", filetype, sep = ""), plot = my_plot)
   
 }
 print_plot("Germany", "gdp_per_cap")
 print_plot("Germany", "life_exp")
 print_plot("Germany", "pop")
-
+print_plot("Bulgaria")
 # write a for loop to print_plot for each country in country_list
 for (cntry in country_list) {
   print_plot(cntry)
