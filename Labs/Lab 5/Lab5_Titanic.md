@@ -134,4 +134,19 @@
 
 #### **Question 9. In this dataset, the Fare variable does not represent the fare per person. Instead, each ticket number has a corresponding fare, and some passengers share one single ticket number. Therefore, the Fare variable is the total fare for a group of passengers sharing the same ticket number. Knowing this, calculate the average fare per person. You don’t need to show a table or a figure for this question, just show the code for the calculation.**
 
+``` r
+titanic |>
+  group_by(Ticket) |>
+  mutate(n_ticket=n(), fare_per_ticket = Fare/n_ticket) |>
+  ungroup() |>
+  summarise(average_fare = mean(fare_per_ticket))
+```
+
+    # A tibble: 1 × 1
+      average_fare
+             <dbl>
+    1         17.8
+
 #### **Question 10. What is the distribution of the per-ticket fare for each ticket class?**
+
+![](Lab5_Titanic_files/figure-commonmark/unnamed-chunk-13-1.png)
